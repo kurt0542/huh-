@@ -6,21 +6,31 @@ const question = document.getElementById('questionContent');
     const ctx = canvas.getContext('2d');
     const funnyGif = document.getElementById('funnyGif');
     const convinceMessage = document.getElementById('convinceMessage');
+    const flowerDrop = document.getElementById('flowerDrop');
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const convinceMessages = [
+    const funMessages = [
         "No talaga? :( ",
         "Sige na please? 🥺",
+        "Ito oh flower para maglaro na tayo",
         "Isa lang ehh, promise!",
         "Hala, wrong click ka siguro?",
         "ANG KULIT MO LUCILLE YSABEL DE LEON!!",
         "Yes na ateeeeee",
+        "Gagawa ka ng garden dito senyorita lucky?",
         "Senyorita Lucky yes mo na",
         "Mali ka lang siguro ng napindot?",
-        "Laro Laro Laro, Yes mo na"
+        "Laro Laro Laro, Yes mo na",
+        "Pagbigyan mo na ang penguin, ito oh flower ulit"
     ];
+      const yesDodgeMessages = [
+        "Akala mo ah😝",
+        "Hindi ganon kadali makipaglaro sa penguin",
+        "Magmomove pa ulit yung yes button?"
+      ];
+    const yesFourthDodgeMessage = "Hindi na gagalaw yung Yes button, click mo na!";
     const gifSources = [
         "img/giphy.gif",
         "img/penguin2.gif",
@@ -32,44 +42,83 @@ const question = document.getElementById('questionContent');
         "audio/spongebob.mp3",
         "audio/fahhh.mp3"
     ];
+    const flowerTriggerMessagePositions = [3, 8, 12];
+    const unlockMessage12AfterPositions = [3, 8];
+    const seenMessagePositions = new Set();
     let lastMessageIndex = -1;
     let lastGifIndex = -1;
     let lastAudioIndex = -1;
+    let yesDodgeCount = 0;
+    let yesDodgeMessageIndex = 0;
     let audio;
 
+    const spawnPersistentFlower = () => {
+      const flower = document.createElement('div');
+      const petalClasses = ['p1', 'p2', 'p3', 'p4', 'p5'];
+
+      petalClasses.forEach((petalClass) => {
+        const petal = document.createElement('span');
+        petal.className = `petal ${petalClass}`;
+        flower.appendChild(petal);
+      });
+
+      const center = document.createElement('span');
+      center.className = 'center';
+      flower.appendChild(center);
+
+      flower.className = 'placed-flower';
+      flower.style.left = `${Math.random() * (window.innerWidth - 40)}px`;
+      flower.style.top = `${Math.random() * (window.innerHeight - 40)}px`;
+      flower.style.setProperty('--flower-size', `${Math.random() * 40 + 72}px`);
+      flower.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 40 - 20}deg)`;
+
+      document.body.appendChild(flower);
+    };
+
     // Dodge Logic
-    const dodge = () => {
-      noBtn.style.position = 'fixed';
-      
-      const yesBtnRect = yesBtn.getBoundingClientRect();
-      const pRect = convinceMessage.getBoundingClientRect();
-      let x, y;
+    const moveButtonRandomly = (button, avoidRects = []) => {
+      button.style.position = 'fixed';
+      let x;
+      let y;
 
       do {
-        x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
-        y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
+        x = Math.random() * (window.innerWidth - button.offsetWidth);
+        y = Math.random() * (window.innerHeight - button.offsetHeight);
       } while (
-        (x < yesBtnRect.right &&
-        x + noBtn.offsetWidth > yesBtnRect.left &&
-        y < yesBtnRect.bottom &&
-        y + noBtn.offsetHeight > yesBtnRect.top) ||
-        (x < pRect.right &&
-        x + noBtn.offsetWidth > pRect.left &&
-        y < pRect.bottom &&
-        y + noBtn.offsetHeight > pRect.top)
+        avoidRects.some((rect) => (
+          x < rect.right &&
+          x + button.offsetWidth > rect.left &&
+          y < rect.bottom &&
+          y + button.offsetHeight > rect.top
+        ))
       );
 
-      noBtn.style.left = `${x}px`;
-      noBtn.style.top = `${y}px`;
+      button.style.left = `${x}px`;
+      button.style.top = `${y}px`;
+    };
+
+    const showFunMessage = () => {
       funnyGif.style.display = 'block';
 
       let randomMsgIndex;
       do {
-        randomMsgIndex = Math.floor(Math.random() * convinceMessages.length);
-      } while (randomMsgIndex === lastMessageIndex);
-      
-      convinceMessage.textContent = convinceMessages[randomMsgIndex];
+        randomMsgIndex = Math.floor(Math.random() * funMessages.length);
+      } while (
+        randomMsgIndex === lastMessageIndex ||
+        (
+          randomMsgIndex + 1 === 12 &&
+          !unlockMessage12AfterPositions.every((position) => seenMessagePositions.has(position))
+        )
+      );
+
+      convinceMessage.textContent = funMessages[randomMsgIndex];
       lastMessageIndex = randomMsgIndex;
+      seenMessagePositions.add(randomMsgIndex + 1);
+
+      flowerDrop.style.display = 'none';
+      if (flowerTriggerMessagePositions.includes(randomMsgIndex + 1)) {
+        spawnPersistentFlower();
+      }
 
       let randomGifIndex;
       do {
@@ -78,41 +127,50 @@ const question = document.getElementById('questionContent');
 
       funnyGif.src = gifSources[randomGifIndex];
       lastGifIndex = randomGifIndex;
+    };
 
+    const dodge = () => {
+      const pRect = convinceMessage.getBoundingClientRect();
+      const yesBtnRect = yesBtn.getBoundingClientRect();
 
-      // --- SOUND TOGGLE: UNCOMMENT TO ENABLE SOUND ---
-      let randomAudioIndex;
+      moveButtonRandomly(noBtn, [yesBtnRect, pRect]);
+      showFunMessage();
+    }
+
+    const dodgeYes = () => {
+      if (yesDodgeCount === 3) {
+        funnyGif.style.display = 'block';
+        convinceMessage.textContent = yesFourthDodgeMessage;
+        yesDodgeCount += 1;
+        return;
+      }
+
+      if (yesDodgeCount > 3) {
+        return;
+      }
+
+      const pRect = convinceMessage.getBoundingClientRect();
+      const noBtnRect = noBtn.getBoundingClientRect();
+
+      moveButtonRandomly(yesBtn, [noBtnRect, pRect]);
+
+      funnyGif.style.display = 'block';
+      convinceMessage.textContent = yesDodgeMessages[yesDodgeMessageIndex];
+      yesDodgeMessageIndex = Math.min(yesDodgeMessageIndex + 1, yesDodgeMessages.length - 1);
+      yesDodgeCount += 1;
+
+      let randomGifIndex;
       do {
-        randomAudioIndex = Math.floor(Math.random() * audioSources.length);
-      } while (randomAudioIndex === lastAudioIndex);
+        randomGifIndex = Math.floor(Math.random() * gifSources.length);
+      } while (randomGifIndex === lastGifIndex);
 
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-      
-      const selectedAudio = audioSources[randomAudioIndex];
-      audio = new Audio(selectedAudio);
-      audio.play();
-      lastAudioIndex = randomAudioIndex;
-
-      if (selectedAudio === "audio/ah-faded.mp3") {
-        setTimeout(() => {
-          if (audio && audio.src.includes("ah-faded.mp3")) {
-            audio.pause();
-            audio.currentTime = 0;
-          }
-        }, 2000);
-      }
-      // --- END SOUND TOGGLE ---
-
-      /* --- SOUND TOGGLE: UNCOMMENT TO DISABLE SOUND ---
-      
-      // --- END SOUND TOGGLE --- */
+      funnyGif.src = gifSources[randomGifIndex];
+      lastGifIndex = randomGifIndex;
     }
 
     noBtn.addEventListener('mouseover', dodge);
     noBtn.addEventListener('click', dodge);
+    yesBtn.addEventListener('mouseover', dodgeYes);
 
     // Confetti Logic
     let confetti = [];

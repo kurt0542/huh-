@@ -83,6 +83,84 @@ body {
       height: 200px;
     }
 
+    #flowerDrop {
+      display: none;
+      margin: 8px auto 14px;
+      font-size: clamp(1rem, 2.7vw, 1.3rem);
+      font-weight: 700;
+      color: #a02145;
+      line-height: 1;
+      animation: flowerPop 0.35s ease;
+    }
+
+    @keyframes flowerPop {
+      0% {
+        transform: scale(0.6) rotate(-12deg);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    .placed-flower {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9;
+      width: var(--flower-size, 34px);
+      height: var(--flower-size, 34px);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      animation: flowerSettle 0.45s ease forwards;
+      will-change: transform, opacity;
+    }
+
+    .placed-flower .petal {
+      position: absolute;
+      width: 54%;
+      height: 70%;
+      left: 50%;
+      top: 50%;
+      background: radial-gradient(circle at 35% 25%, #ffd9ea 0%, #ff7fb6 52%, #f45199 100%);
+      border-radius: 55% 55% 42% 42%;
+      transform-origin: 50% 88%;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.45), 0 3px 6px rgba(158, 20, 86, 0.2);
+    }
+
+    .placed-flower .center {
+      position: absolute;
+      width: 42%;
+      height: 42%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff4bf 0%, #ffd45a 58%, #e6a800 100%);
+      box-shadow: inset 0 0 0 3px rgba(255, 235, 166, 0.5), 0 2px 5px rgba(143, 96, 0, 0.35);
+    }
+
+    .placed-flower .p1 { transform: translate(-50%, -85%) rotate(-8deg) scale(1); }
+    .placed-flower .p2 { transform: translate(-50%, -90%) rotate(64deg) scale(0.97); }
+    .placed-flower .p3 { transform: translate(-50%, -88%) rotate(142deg) scale(1.02); }
+    .placed-flower .p4 { transform: translate(-50%, -90%) rotate(218deg) scale(0.96); }
+    .placed-flower .p5 { transform: translate(-50%, -86%) rotate(292deg) scale(1); }
+
+    @keyframes flowerSettle {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.25);
+      }
+      65% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
     #successContent {
       display: none;
       opacity: 0;
